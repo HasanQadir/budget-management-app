@@ -187,23 +187,3 @@ class DaypartingSchedule(models.Model):
             campaign=campaign,
             is_active=True
         ).order_by('-priority', 'day_of_week', 'start_time'))
-    
-    @classmethod
-    def should_campaign_be_active_now(cls, campaign: 'Campaign') -> bool:
-        """
-        Check if a campaign should be active right now based on its schedules.
-        
-        Args:
-            campaign: The campaign to check.
-            
-        Returns:
-            bool: True if the campaign should be active now, False otherwise.
-        """
-        schedules = cls.get_active_schedules_for_campaign(campaign)
-        
-        # If no schedules exist, campaign can run anytime
-        if not schedules:
-            return True
-        
-        # Check if any schedule is active now
-        return any(schedule.is_active_now() for schedule in schedules)
