@@ -11,7 +11,8 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
 
-from budget.models import Brand, Campaign, SpendRecord
+from budget.models import Brand, SpendRecord
+from budget.models.campaign import Campaign, CampaignStatus
 
 
 class Command(BaseCommand):
@@ -70,7 +71,7 @@ class Command(BaseCommand):
             # Get the base queryset
             campaigns = Campaign.objects.select_related('brand').filter(
                 is_active=True,
-                status=Campaign.CampaignStatus.ACTIVE
+                status=CampaignStatus.ACTIVE
             )
             
             # Apply filters
