@@ -1,6 +1,7 @@
 """Celery configuration for the budget manager."""
 import os
 from celery import Celery
+from celery.schedules import crontab
 from django.conf import settings
 from typing import Any, Dict
 
@@ -22,19 +23,19 @@ app.autodiscover_tasks()
 app.conf.beat_schedule: Dict[str, Any] = {
     'check-campaign-budgets': {
         'task': 'budget.tasks.check_campaign_budgets',
-        'schedule': 300.0,  # Every 5 minutes
+        'schedule': crontab(minute='*/5'),  # Every 5 minutes
     },
     'reset-daily-budgets': {
         'task': 'budget.tasks.reset_daily_budgets',
-        'schedule': 86400.0,  # Daily at midnight
+        'schedule': crontab(hour=0, minute=0),  # Daily at midnight UTC
     },
     'reset-monthly-budgets': {
         'task': 'budget.tasks.reset_monthly_budgets',
-        'schedule': 2678400.0,  # Monthly (31 days in seconds)
+        'schedule': crontab(day_of_month=1, hour=0, minute=0),  # First day of the month at midnight UTC
     },
     'update-campaign-statuses': {
         'task': 'budget.tasks.update_campaign_statuses',
-        'schedule': 300.0,  # Every 5 minutes
+        'schedule': crontab(minute='*/5'),  # Every 5 minutes
     },
 }
 
