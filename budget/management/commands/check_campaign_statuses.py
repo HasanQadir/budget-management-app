@@ -69,8 +69,9 @@ class Command(BaseCommand):
             
             # Calculate summary statistics
             total_campaigns = len(campaigns)
-            active_campaigns = sum(1 for c in campaigns if c.is_active)
-            paused_campaigns = total_campaigns - active_campaigns
+            active_campaigns = sum(1 for c in campaigns if c.status == 'active')
+            paused_campaigns = sum(1 for c in campaigns if c.status == 'paused')
+            completed_campaigns = sum(1 for c in campaigns if c.status == 'completed')
             
             over_budget = sum(1 for c in campaigns if c.current_daily_spend >= c.daily_budget)
             
@@ -79,12 +80,18 @@ class Command(BaseCommand):
             self.stdout.write(f'Total campaigns: {total_campaigns}')
             self.stdout.write(f'Active: {active_campaigns}')
             self.stdout.write(f'Paused: {paused_campaigns}')
+            self.stdout.write(f'Completed: {completed_campaigns}')
             self.stdout.write(f'Over daily budget: {over_budget}')
             self.stdout.write('\n=== Campaign Details ===\n')
             
             # Display details for each campaign
             for campaign in campaigns:
-                status = self.style.SUCCESS('ACTIVE') if campaign.is_active else self.style.ERROR('PAUSED')
+                if campaign.status == 'active':
+                    status = self.style.SUCCESS('ACTIVE')
+                elif campaign.status == 'completed':
+                    status = self.style.NOTICE('COMPLETED')
+                else:  # paused or any other status
+                    status = self.style.ERROR('PAUSED')
                 budget_used = (campaign.current_daily_spend / campaign.daily_budget * 100) if campaign.daily_budget > 0 else 0
                 
                 # Color code the budget usage
@@ -124,14 +131,6 @@ class Command(BaseCommand):
                         'Use --limit to show more.'
                     )
                 )
-            
-            return {
-                'timestamp': timezone.now().isoformat(),
-                'total_campaigns': total_campaigns,
-                'active_campaigns': active_campaigns,
-                'paused_campaigns': paused_campaigns,
-                'over_budget': over_budget,
-            }
             
         except Exception as e:
             self.stderr.write(
