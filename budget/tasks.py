@@ -39,7 +39,7 @@ def check_campaign_budgets() -> Dict[str, Any]:
     try:
         # Get all active campaigns
         campaigns = Campaign.objects.filter(
-            status=Campaign.CampaignStatus.ACTIVE
+            status=CampaignStatus.ACTIVE
         ).select_related('brand')
         
         for campaign in campaigns:
@@ -80,10 +80,38 @@ def check_campaign_budgets() -> Dict[str, Any]:
     return stats
 
 
+def _reactivate_eligible_campaigns() -> Dict[str, int]:
+    """Reactivate campaigns that were paused due to budget constraints."""
+    stats = {
+        'campaigns_reactivated': 0,
+        'brands_reactivated': 0
+    }
+    
+    # Reactivate eligible campaigns
+    campaigns = Campaign.objects.filter(
+        status=CampaignStatus.ACTIVE,
+        is_active=False,
+        daily_budget__gt=F('current_daily_spend')
+    ).select_related('brand')
+    
+    for campaign in campaigns:
+        try:
+            # Only reactivate if brand has budget and campaign passes all checks
+            if (campaign.brand.is_active and 
+                campaign.brand.has_daily_budget_available() and
+                campaign.should_be_active()):
+                campaign.is_active = True
+                campaign.save(update_fields=['is_active', 'updated_at'])
+                stats['campaigns_reactivated'] += 1
+        except Exception as e:
+            logger.error(f"Error reactivating campaign {campaign.id}: {str(e)}", exc_info=True)
+    
+    return stats
+
 @shared_task(name="reset_daily_budgets")
 def reset_daily_budgets() -> Dict[str, Any]:
     """
-    Reset daily budgets for all brands and campaigns.
+    Reset daily budgets for all brands and campaigns and reactivate eligible campaigns.
     
     This task runs once per day at midnight to reset daily spend counters.
     
@@ -94,6 +122,7 @@ def reset_daily_budgets() -> Dict[str, Any]:
         'timestamp': timezone.now().isoformat(),
         'brands_updated': 0,
         'campaigns_updated': 0,
+        'campaigns_reactivated': 0,
         'errors': []
     }
     
@@ -112,8 +141,13 @@ def reset_daily_budgets() -> Dict[str, Any]:
         )
         stats['campaigns_updated'] = updated_campaigns
         
+        # Reactivate eligible campaigns
+        reactivation_stats = _reactivate_eligible_campaigns()
+        stats.update(reactivation_stats)
+        
         logger.info(
-            f"Reset daily budgets: {updated_brands} brands, {updated_campaigns} campaigns"
+            f"Reset daily budgets: {updated_brands} brands, {updated_campaigns} campaigns, "
+            f"{reactivation_stats['campaigns_reactivated']} campaigns reactivated"
         )
     except Exception as e:
         error_msg = f"Error in reset_daily_budgets task: {str(e)}"
@@ -126,7 +160,7 @@ def reset_daily_budgets() -> Dict[str, Any]:
 @shared_task(name="reset_monthly_budgets")
 def reset_monthly_budgets() -> Dict[str, Any]:
     """
-    Reset monthly budgets for all brands.
+    Reset monthly budgets for all brands and reactivate eligible campaigns.
     
     This task runs once per month to reset monthly spend counters.
     
@@ -136,6 +170,7 @@ def reset_monthly_budgets() -> Dict[str, Any]:
     stats = {
         'timestamp': timezone.now().isoformat(),
         'brands_updated': 0,
+        'campaigns_reactivated': 0,
         'errors': []
     }
     
@@ -147,7 +182,14 @@ def reset_monthly_budgets() -> Dict[str, Any]:
         )
         stats['brands_updated'] = updated_brands
         
-        logger.info(f"Reset monthly budgets for {updated_brands} brands")
+        # Reactivate eligible campaigns (both daily and monthly budgets were reset)
+        reactivation_stats = _reactivate_eligible_campaigns()
+        stats.update(reactivation_stats)
+        
+        logger.info(
+            f"Reset monthly budgets: {updated_brands} brands, "
+            f"{reactivation_stats['campaigns_reactivated']} campaigns reactivated"
+        )
     except Exception as e:
         error_msg = f"Error in reset_monthly_budgets task: {str(e)}"
         logger.error(error_msg, exc_info=True)
@@ -177,7 +219,7 @@ def update_campaign_statuses() -> Dict[str, Any]:
     try:
         # Get all active campaigns with dayparting schedules
         campaigns = Campaign.objects.filter(
-            status=Campaign.CampaignStatus.ACTIVE,
+            status=CampaignStatus.ACTIVE,
             dayparting_schedules__isnull=False
         ).distinct()
         
@@ -235,7 +277,8 @@ def process_spend_record(
     Returns:
         Dict with the result of the operation.
     """
-    from .models import SpendRecord
+    from .models import Brand, SpendRecord
+    from .models.campaign import Campaign, CampaignStatus
     
     result = {
         'success': False,

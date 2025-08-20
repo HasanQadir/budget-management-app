@@ -88,10 +88,29 @@ class Campaign(models.Model):
         return f"{self.brand.name} - {self.name}"
     
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Override save to ensure proper state management."""
-        if self.status == CampaignStatus.ARCHIVED:
+        """
+        Override save to ensure proper state management.
+        
+        Rules:
+        - ARCHIVED: Always inactive
+        - COMPLETED: Always inactive
+        - PAUSED: Always inactive
+        - ACTIVE: Active only if should_be_active() is True
+        """
+        # First handle status-based active state
+        if self.status in [CampaignStatus.ARCHIVED, CampaignStatus.COMPLETED, CampaignStatus.PAUSED]:
             self.is_active = False
+        elif self.status == CampaignStatus.ACTIVE:
+            # Only set to True if should_be_active() is True
+            # Don't set to False here as that would prevent activation
+            if not self.should_be_active() and self.is_active:
+                self.is_active = False
+        
         super().save(*args, **kwargs)
+        
+        # If this is a new record or status changed, update related objects
+        if kwargs.get('update_fields') is None and self.pk:
+            self.update_status_based_on_budget()
     
     def reset_daily_spend(self) -> None:
         """Reset the daily spend counter and update the last reset date."""

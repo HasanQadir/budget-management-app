@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from .models import Brand, Campaign, DaypartingSchedule
+from .models.campaign import CampaignStatus
 
 
 @receiver(pre_save, sender=Brand)
@@ -38,7 +39,7 @@ def update_campaign_timestamps(sender: Any, instance: Campaign, **kwargs: Any) -
         instance.current_daily_spend = instance.daily_budget
     
     # Ensure active status is consistent with status field
-    if instance.status != Campaign.CampaignStatus.ACTIVE:
+    if instance.status != CampaignStatus.ACTIVE:
         instance.is_active = False
 
 
