@@ -1,4 +1,4 @@
-""Celery tasks for budget management."""
+"""Celery tasks for budget management."""
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
 from decimal import Decimal

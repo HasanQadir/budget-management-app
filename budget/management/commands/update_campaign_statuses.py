@@ -1,4 +1,4 @@
-""
+"""
 Management command to update campaign statuses based on budgets and schedules.
 """
 from typing import Any, Dict, List
@@ -10,12 +10,12 @@ from budget.models import Campaign
 
 
 class Command(BaseCommand):
-    ""Command to update campaign statuses based on budgets and schedules."""
+    """Command to update campaign statuses based on budgets and schedules."""
     
     help = 'Update campaign statuses based on budgets and dayparting schedules'
     
     def add_arguments(self, parser):
-        ""Add command line arguments."""
+        """Add command line arguments."""
         parser.add_argument(
             '--campaign-ids',
             nargs='+',
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         )
     
     def handle(self, *args: Any, **options: Any) -> None:
-        ""Execute the command."""
+        """Execute the command."""
         campaign_ids = options.get('campaign_ids')
         force = options.get('force', False)
         

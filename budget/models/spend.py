@@ -1,4 +1,4 @@
-""SpendRecord model for tracking advertising spend."""
+"""SpendRecord model for tracking advertising spend."""
 from decimal import Decimal
 from typing import Optional, TYPE_CHECKING
 from django.db import models
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class SpendRecord(models.Model):
-    ""
+    """
     Tracks individual spend events for campaigns and brands.
     
     Each record represents a single spend event with an amount and timestamp.
@@ -76,7 +76,7 @@ class SpendRecord(models.Model):
         return f"{self.amount} USD - {campaign_name} - {self.timestamp}"
     
     def save(self, *args: Any, **kwargs: Any) -> None:
-        ""
+        """
         Override save to update related campaign and brand spend.
         
         Args:
@@ -103,7 +103,7 @@ class SpendRecord(models.Model):
     
     @classmethod
     def get_daily_spend(cls, brand: 'Brand', date: Optional[date] = None) -> Decimal:
-        ""
+        """
         Get total spend for a brand on a specific day.
         
         Args:
@@ -129,7 +129,7 @@ class SpendRecord(models.Model):
     @classmethod
     def get_monthly_spend(cls, brand: 'Brand', year: Optional[int] = None, 
                          month: Optional[int] = None) -> Decimal:
-        ""
+        """
         Get total spend for a brand in a specific month.
         
         Args:

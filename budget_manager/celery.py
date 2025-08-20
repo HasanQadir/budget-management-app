@@ -1,4 +1,4 @@
-""Celery configuration for the budget manager."""
+"""Celery configuration for the budget manager."""
 import os
 from celery import Celery
 from django.conf import settings
@@ -42,5 +42,5 @@ app.conf.timezone = 'UTC'
 
 @app.task(bind=True)
 def debug_task(self) -> None:
-    ""Debug task to verify Celery is working."""
+    """Debug task to verify Celery is working."""
     print(f'Request: {self.request!r}')
