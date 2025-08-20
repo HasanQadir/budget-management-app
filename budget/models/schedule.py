@@ -28,7 +28,7 @@ class DaypartingSchedule(models.Model):
     complex dayparting requirements.
     """
     campaign = models.ForeignKey(
-        'campaign.Campaign',
+        'budget.Campaign',
         on_delete=models.CASCADE,
         related_name='dayparting_schedules',
         help_text="The campaign this schedule applies to.",

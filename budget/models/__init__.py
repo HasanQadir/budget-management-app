@@ -1,4 +1,4 @@
-""Budget models package."""
+"""Budget models package."""
 from .brand import Brand
 from .campaign import Campaign
 from .spend import SpendRecord

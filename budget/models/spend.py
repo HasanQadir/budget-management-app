@@ -1,6 +1,7 @@
 """SpendRecord model for tracking advertising spend."""
+from datetime import date
 from decimal import Decimal
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.utils import timezone
@@ -17,14 +18,14 @@ class SpendRecord(models.Model):
     Each record represents a single spend event with an amount and timestamp.
     """
     brand = models.ForeignKey(
-        'brand.Brand',
+        'budget.Brand',
         on_delete=models.CASCADE,
         related_name='spend_records',
         help_text="The brand associated with this spend record.",
     )
     
     campaign = models.ForeignKey(
-        'campaign.Campaign',
+        'budget.Campaign',
         on_delete=models.CASCADE,
         related_name='spend_records',
         help_text="The campaign associated with this spend record.",

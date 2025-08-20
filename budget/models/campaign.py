@@ -32,7 +32,7 @@ class Campaign(models.Model):
     )
     
     brand = models.ForeignKey(
-        'brand.Brand',
+        'budget.Brand',
         on_delete=models.CASCADE,
         related_name='campaigns',
         help_text="The brand that owns this campaign.",
