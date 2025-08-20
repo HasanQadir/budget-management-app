@@ -1,6 +1,15 @@
 # Budget Management System
 
-A Django + Celery based system for managing advertising budgets and campaign scheduling.
+A Django 5.2.5 + Celery based system for managing advertising budgets and campaign scheduling.
+
+## Requirements
+
+- Python 3.10+
+- Redis 6.0+
+- Django 5.2.5 (LTS)
+- Celery 5.3.6
+- PostgreSQL 13+ (recommended) or SQLite (for development)
+- Node.js 16+ (if using frontend assets)
 
 ## Features
 
@@ -25,9 +34,14 @@ A Django + Celery based system for managing advertising budgets and campaign sch
 
 3. Set up environment variables in `.env` file:
    ```
+   # Required
    SECRET_KEY=your-secret-key
    DEBUG=True
    REDIS_URL=redis://localhost:6379/0
+   
+   # Optional
+   ENVIRONMENT=development  # Set to 'production' in production
+   ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
    ```
 
 4. Run migrations:

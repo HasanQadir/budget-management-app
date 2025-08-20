@@ -82,7 +82,7 @@ class DaypartingSchedule(models.Model):
                 violation_error_message='A schedule already exists for this campaign, day, and time range.'
             ),
             models.CheckConstraint(
-                check=models.Q(end_time__gt=models.F('start_time')),
+                condition=models.Q(end_time__gt=models.F('start_time')),
                 name='end_time_after_start_time',
                 violation_error_message='End time must be after start time.'
             )

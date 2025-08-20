@@ -14,9 +14,34 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY: str = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG: bool = os.getenv('DEBUG', 'True') == 'True'
+DEBUG: bool = os.getenv('DEBUG', 'False') == 'True' and os.getenv('ENVIRONMENT') != 'production'
 
-ALLOWED_HOSTS: List[str] = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS: List[str] = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
+
+# Security settings
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Additional security settings
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# For development, you can override these in local_settings.py
+try:
+    from .local_settings import *  # noqa: F401, F403
+except ImportError:
+    pass
+
+# Generate a new secret key if not in production
+if DEBUG and (SECRET_KEY == 'django-insecure-your-secret-key-here' or len(SECRET_KEY) < 50):
+    from django.core.management.utils import get_random_secret_key
+    SECRET_KEY = get_random_secret_key()
 
 # Application definition
 INSTALLED_APPS: List[str] = [
