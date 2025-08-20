@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from budget.models import Brand, Campaign, DaypartingSchedule
+from budget.models.campaign import CampaignStatus
 
 
 class Command(BaseCommand):
@@ -71,11 +72,14 @@ class Command(BaseCommand):
                     )
                 )
                 
-                return {
-                    'timestamp': timezone.now().isoformat(),
-                    'brands_created': len(brands),
-                    'campaigns_created': len(all_campaigns),
-                }
+                # Log success instead of returning a dictionary
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f'Successfully seeded database with {len(brands)} brands, '
+                        f'{len(all_campaigns)} campaigns, and dayparting schedules.\n'
+                    )
+                )
+                return None
                 
         except Exception as e:
             self.stderr.write(
@@ -153,18 +157,18 @@ class Command(BaseCommand):
                 daily_budget=daily_budget,
                 current_daily_spend=Decimal('0.00'),
                 status=random.choice([
-                    Campaign.CampaignStatus.ACTIVE,
-                    Campaign.CampaignStatus.PAUSED,
-                    Campaign.CampaignStatus.ACTIVE,
-                    Campaign.CampaignStatus.ACTIVE,  # Higher chance of being active
-                    Campaign.CampaignStatus.COMPLETED,
+                    CampaignStatus.ACTIVE,
+                    CampaignStatus.PAUSED,
+                    CampaignStatus.ACTIVE,
+                    CampaignStatus.ACTIVE,  # Higher chance of being active
+                    CampaignStatus.COMPLETED,
                 ]),
                 is_active=False,  # Will be set based on status and budget
                 last_daily_reset=timezone.now().date()
             )
             
             # Update is_active based on status
-            if campaign.status == Campaign.CampaignStatus.ACTIVE:
+            if campaign.status == CampaignStatus.ACTIVE:
                 campaign.is_active = True
                 campaign.save(update_fields=['is_active'])
             
