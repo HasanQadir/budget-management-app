@@ -8,7 +8,8 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db.models import Count, Sum, Q, F
 
-from budget.models import Brand, Campaign, SpendRecord, DaypartingSchedule
+from budget.models import Brand, SpendRecord, DaypartingSchedule
+from budget.models.campaign import Campaign, CampaignStatus
 
 
 class Command(BaseCommand):
@@ -44,7 +45,7 @@ class Command(BaseCommand):
             active_brands = Brand.objects.filter(is_active=True).count()
             active_campaigns = Campaign.objects.filter(
                 is_active=True,
-                status=Campaign.CampaignStatus.ACTIVE
+                status=CampaignStatus.ACTIVE
             ).count()
             
             # Get recent spend records
@@ -138,26 +139,6 @@ class Command(BaseCommand):
             # Show detailed information if requested
             if verbose:
                 self._show_detailed_information(now)
-            
-            return {
-                'timestamp': now.isoformat(),
-                'brands': brand_count,
-                'active_brands': active_brands,
-                'campaigns': campaign_count,
-                'active_campaigns': active_campaigns,
-                'spend_records': spend_record_count,
-                'schedules': schedule_count,
-                'recent_activity': {
-                    'last_hour': {
-                        'records': recent_spend['record_count'] or 0,
-                        'total_spend': str(recent_spend['total_spend'] or '0.00'),
-                    }
-                },
-                'issues': [
-                    {'level': level, 'message': message}
-                    for level, message in issues
-                ]
-            }
             
         except Exception as e:
             self.stderr.write(
