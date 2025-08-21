@@ -136,6 +136,18 @@ CELERY_TIMEZONE: str = TIME_ZONE
 # Celery Beat Configuration
 CELERY_BEAT_SCHEDULER: str = 'django_celery_beat.schedulers:DatabaseScheduler'
 
+# Worker Configuration
+# Number of worker processes/threads (default: number of CPU cores)
+CELERY_WORKER_CONCURRENCY: int = 4
+# Number of messages to prefetch per worker (default: 4 * concurrency)
+CELERY_WORKER_PREFETCH_MULTIPLIER: int = 2
+# Maximum number of tasks a worker can execute before being replaced (prevents memory leaks)
+CELERY_WORKER_MAX_TASKS_PER_CHILD: int = 100
+# Time in seconds after which a task will be killed if it hasn't completed
+CELERY_TASK_TIME_LIMIT: int = 30 * 60  # 30 minutes
+# Time in seconds after which a task will raise a SoftTimeLimitExceeded exception
+CELERY_TASK_SOFT_TIME_LIMIT: int = 25 * 60  # 25 minutes
+
 # Logging Configuration
 LOGGING: Dict[str, Any] = {
     'version': 1,
