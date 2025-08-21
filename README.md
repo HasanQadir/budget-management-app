@@ -49,7 +49,28 @@ A Django 5.2.5 + Celery based system for managing advertising budgets and campai
    python manage.py migrate
    ```
 
-5. Start Redis server (required for Celery)
+5. Install and start Redis:
+   ### Redis Installation
+
+   To install Redis, follow the instructions for your operating system:
+
+   - **macOS**: Use Homebrew to install Redis.
+     ```bash
+     brew install redis
+     brew services start redis
+     ```
+
+   - **Linux**: Use the package manager specific to your distribution. For example, on Ubuntu:
+     ```bash
+     sudo apt update
+     sudo apt install redis-server
+     sudo systemctl enable redis-server.service
+     sudo systemctl start redis-server.service
+     ```
+
+   - **Windows**: Use the Windows Subsystem for Linux (WSL) or download a Redis installer from the official Redis website.
+
+   Ensure that Redis is running before starting Celery.
 
 6. Start Celery worker:
    ```bash
