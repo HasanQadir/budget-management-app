@@ -22,7 +22,7 @@ app.autodiscover_tasks()
 # Configure periodic tasks
 app.conf.beat_schedule: Dict[str, Any] = {
     'check-campaign-budgets': {
-        'task': 'budget.tasks.check_campaign_budgets',
+        'task': 'check_campaign_budgets',
         'schedule': crontab(minute='*/5'),  # Every 5 minutes
     },
     'reset-daily-budgets': {
@@ -30,11 +30,11 @@ app.conf.beat_schedule: Dict[str, Any] = {
         'schedule': crontab(hour=0, minute=0),  # Daily at midnight UTC
     },
     'reset-monthly-budgets': {
-        'task': 'budget.tasks.reset_monthly_budgets',
+        'task': 'reset_monthly_budgets',
         'schedule': crontab(day_of_month=1, hour=0, minute=0),  # First day of the month at midnight UTC
     },
     'update-campaign-statuses': {
-        'task': 'budget.tasks.update_campaign_statuses',
+        'task': 'update_campaign_statuses',
         'schedule': crontab(minute='*/5'),  # Every 5 minutes
     },
 }

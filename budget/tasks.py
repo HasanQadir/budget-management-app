@@ -11,6 +11,7 @@ from django.db.models import F, Q
 from .models import (
     Brand,
     Campaign,
+    CampaignStatus,
     SpendRecord,
     DaypartingSchedule,
 )
