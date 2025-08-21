@@ -3,6 +3,7 @@ Management command to check system health and status.
 """
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
+from argparse import ArgumentParser
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -17,7 +18,7 @@ class Command(BaseCommand):
     
     help = 'Check system health and status'
     
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command line arguments."""
         parser.add_argument(
             '--verbose',
@@ -151,15 +152,18 @@ class Command(BaseCommand):
         self.stdout.write('\n' + self.style.SUCCESS('=== Detailed Information ==='))
         
         # Show top spending brands
-        top_brands = Brand.objects.annotate(
-            daily_usage=(F('current_daily_spend') / F('daily_budget') * 100)
-        ).order_by('-current_daily_spend')[:5]
+        top_brands = Brand.objects.order_by('-current_daily_spend')[:5]
         
         self.stdout.write('\n' + self.style.SUCCESS('Top Spending Brands (Today):'))
         for brand in top_brands:
+            daily_usage = (
+                (brand.current_daily_spend / brand.daily_budget * 100)
+                if brand.daily_budget > 0
+                else 0
+            )
             self.stdout.write(
                 f"- {brand.name}: ${brand.current_daily_spend:.2f} / "
-                f"${brand.daily_budget:.2f} ({brand.daily_usage:.1f}%)"
+                f"${brand.daily_budget:.2f} ({daily_usage:.1f}%)"
             )
         
         # Show campaigns with highest spend
@@ -169,9 +173,11 @@ class Command(BaseCommand):
         
         self.stdout.write('\n' + self.style.SUCCESS('Top Spending Campaigns (Today):'))
         for campaign in top_campaigns:
-            usage = (campaign.current_daily_spend / campaign.daily_budget * 100) \
-                if campaign.daily_budget > 0 else 0
-            
+            usage = (
+                (campaign.current_daily_spend / campaign.daily_budget * 100)
+                if campaign.daily_budget > 0
+                else 0
+            )
             self.stdout.write(
                 f"- {campaign.brand.name} - {campaign.name}: "
                 f"${campaign.current_daily_spend:.2f} / "

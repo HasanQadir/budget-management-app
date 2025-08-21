@@ -2,6 +2,7 @@
 Management command to check and log the current status of campaigns.
 """
 from typing import Any, Dict, List, Optional
+from argparse import ArgumentParser
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db.models import Q, F
@@ -14,7 +15,7 @@ class Command(BaseCommand):
     
     help = 'Check and log the current status of campaigns'
     
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command line arguments."""
         parser.add_argument(
             '--brand',
@@ -115,7 +116,16 @@ class Command(BaseCommand):
                 if hasattr(campaign, 'dayparting_schedules'):
                     schedules = campaign.dayparting_schedules.filter(is_active=True)
                     if schedules.exists():
-                        schedule_days = [s.get_day_of_week_display() for s in schedules]
+                        day_of_week_display = {
+                            0: "Monday",
+                            1: "Tuesday",
+                            2: "Wednesday",
+                            3: "Thursday",
+                            4: "Friday",
+                            5: "Saturday",
+                            6: "Sunday"
+                        }
+                        schedule_days = [day_of_week_display.get(s.day_of_week, str(s.day_of_week)) for s in schedules]
                         self.stdout.write(
                             f"  Scheduled: {', '.join(schedule_days)} | "
                             f"{schedules[0].start_time} - {schedules[0].end_time} {schedules[0].timezone}"

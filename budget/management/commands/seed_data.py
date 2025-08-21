@@ -5,6 +5,7 @@ import random
 from typing import Any, Dict, List, Tuple
 from datetime import time, datetime, timedelta
 from decimal import Decimal
+from argparse import ArgumentParser
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -19,7 +20,7 @@ class Command(BaseCommand):
     
     help = 'Seed the database with sample data for testing'
     
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command line arguments."""
         parser.add_argument(
             '--clear',
@@ -79,7 +80,6 @@ class Command(BaseCommand):
                         f'{len(all_campaigns)} campaigns, and dayparting schedules.\n'
                     )
                 )
-                return None
                 
         except Exception as e:
             self.stderr.write(
@@ -172,9 +172,14 @@ class Command(BaseCommand):
                 campaign.is_active = True
                 campaign.save(update_fields=['is_active'])
             
+            status_display = {
+                CampaignStatus.ACTIVE: "Active",
+                CampaignStatus.PAUSED: "Paused",
+                CampaignStatus.COMPLETED: "Completed"
+            }.get(campaign.status, campaign.status)
             self.stdout.write(
                 f"  - Created campaign: {campaign.name} (${daily_budget:.2f} daily budget) | "
-                f"Status: {campaign.get_status_display()}"
+                f"Status: {status_display}"
             )
             
             campaigns.append(campaign)

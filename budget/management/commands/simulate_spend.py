@@ -6,6 +6,7 @@ import uuid
 from typing import Any, Dict, List, Optional, Tuple
 from decimal import Decimal
 from datetime import timedelta
+from argparse import ArgumentParser
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -20,7 +21,7 @@ class Command(BaseCommand):
     
     help = 'Simulate spending for testing budget tracking and campaign pausing'
     
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command line arguments."""
         parser.add_argument(
             '--brand',
@@ -189,14 +190,6 @@ class Command(BaseCommand):
             self.stdout.write(f'Total transactions: {len(results)}')
             self.stdout.write(f'Total spent: ${total_spent:.2f}')
             self.stdout.write(f'Campaign status changes: {status_changes}')
-            
-            return {
-                'timestamp': timezone.now().isoformat(),
-                'total_transactions': len(results),
-                'total_spent': str(total_spent),
-                'status_changes': status_changes,
-                'results': results,
-            }
             
         except Exception as e:
             self.stderr.write(

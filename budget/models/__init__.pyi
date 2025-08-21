@@ -5,12 +5,14 @@ if TYPE_CHECKING:
     from django.db.models.manager import Manager
     from .brand import Brand as Brand
     from .campaign import Campaign as Campaign
+    from .campaign import CampaignStatus as CampaignStatus
     from .spend import SpendRecord as SpendRecord
     from .schedule import DaypartingSchedule as DaypartingSchedule
 
 __all__ = [
     'Brand',
     'Campaign',
+    'CampaignStatus',
     'SpendRecord',
     'DaypartingSchedule',
 ]

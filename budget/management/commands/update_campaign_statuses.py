@@ -2,6 +2,7 @@
 Management command to update campaign statuses based on budgets and schedules.
 """
 from typing import Any, Dict, List
+from argparse import ArgumentParser
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db import transaction
@@ -14,7 +15,7 @@ class Command(BaseCommand):
     
     help = 'Update campaign statuses based on budgets and dayparting schedules'
     
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command line arguments."""
         parser.add_argument(
             '--campaign-ids',
@@ -39,12 +40,12 @@ class Command(BaseCommand):
             # Get the queryset based on provided campaign IDs
             queryset = Campaign.objects.all()
             if campaign_ids:
-                queryset = queryset.filter(id__in=campaign_ids)
+                queryset = queryset.filter(pk__in=campaign_ids)
             
             updated_campaigns: List[Dict[str, Any]] = []
             
             with transaction.atomic():
-                for campaign in queryset.select_related('brand'):
+                for campaign in queryset.select_related('brand'):  # type: Campaign
                     old_status = campaign.is_active
                     
                     # Update status based on budget and schedule
@@ -63,7 +64,7 @@ class Command(BaseCommand):
                             status_change = f"{status_str} (no change)"
                         
                         updated_campaigns.append({
-                            'id': campaign.id,
+                            'id': campaign.pk,
                             'name': campaign.name,
                             'brand': campaign.brand.name,
                             'status_change': status_change,
@@ -72,16 +73,15 @@ class Command(BaseCommand):
                             'remaining_budget': str(campaign.get_remaining_daily_budget()),
                         })
             
-            # Output results
             if updated_campaigns:
                 self.stdout.write(self.style.SUCCESS('Updated the following campaigns:'))
-                for campaign in updated_campaigns:
+                for campaign_dict in updated_campaigns:
                     self.stdout.write(
-                        f"- {campaign['name']} (ID: {campaign['id']}, "
-                        f"Brand: {campaign['brand']}): {campaign['status_change']} | "
-                        f"Budget: ${campaign['daily_budget']} | "
-                        f"Spent: ${campaign['current_spend']} | "
-                        f"Remaining: ${campaign['remaining_budget']}"
+                        f"- {campaign_dict['name']} (ID: {campaign_dict['id']}, "
+                        f"Brand: {campaign_dict['brand']}): {campaign_dict['status_change']} | "
+                        f"Budget: ${campaign_dict['daily_budget']} | "
+                        f"Spent: ${campaign_dict['current_spend']} | "
+                        f"Remaining: ${campaign_dict['remaining_budget']}"
                     )
             else:
                 self.stdout.write(self.style.WARNING('No campaigns were updated.'))
@@ -93,7 +93,6 @@ class Command(BaseCommand):
                 'updated_campaigns': updated_campaigns,
             }
             self.stdout.write(f"\nUpdate complete. {result['campaigns_updated']} campaigns processed.")
-            
             
         except Exception as e:
             self.stderr.write(

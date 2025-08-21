@@ -1,8 +1,9 @@
 """
 Management command to generate budget performance reports.
 """
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, date
 from typing import Any, Dict, List, Tuple
+from argparse import ArgumentParser
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -16,7 +17,7 @@ class Command(BaseCommand):
     
     help = 'Generate budget performance reports'
     
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command line arguments."""
         parser.add_argument(
             '--period',
@@ -45,7 +46,7 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(self.style.ERROR(f'Error generating report: {str(e)}'))
     
-    def _get_date_range(self, period: str) -> Tuple[datetime.date, datetime.date]:
+    def _get_date_range(self, period: str) -> Tuple[date, date]:
         """Get start and end dates based on period."""
         today = timezone.now().date()
         
@@ -74,8 +75,8 @@ class Command(BaseCommand):
     
     def _generate_report_data(
         self,
-        start_date: datetime.date,
-        end_date: datetime.date
+        start_date: date,
+        end_date: date
     ) -> Dict[str, Any]:
         """Generate the report data."""
         start_datetime = timezone.make_aware(datetime.combine(start_date, time.min))

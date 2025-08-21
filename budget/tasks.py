@@ -1,25 +1,27 @@
 """Celery tasks for budget management."""
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Callable
 from decimal import Decimal
 import logging
-from celery import shared_task
+from celery import shared_task  # type: ignore
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import F, Q
 
-from .models import (
-    Brand,
-    Campaign,
-    CampaignStatus,
-    SpendRecord,
-    DaypartingSchedule,
-)
+from .models.campaign import Campaign, CampaignStatus
+from .models.brand import Brand
+from .models.spend import SpendRecord
+from .models.schedule import DaypartingSchedule
 
 logger = logging.getLogger(__name__)
 
+# Define a type for shared_task decorator
+SharedTaskDecorator = Callable[
+    [Callable[..., Dict[str, Any]]],
+    Callable[..., Dict[str, Any]]
+]
 
-@shared_task(name="check_campaign_budgets")
+@shared_task(name="budget.tasks.check_campaign_budgets")  # type: ignore[misc]
 def check_campaign_budgets() -> Dict[str, Any]:
     """
     Check campaign budgets and update statuses if needed.
@@ -29,7 +31,7 @@ def check_campaign_budgets() -> Dict[str, Any]:
     Returns:
         Dict with statistics about the operation.
     """
-    stats = {
+    stats: Dict[str, Any] = {
         'timestamp': timezone.now().isoformat(),
         'campaigns_checked': 0,
         'campaigns_paused': 0,
@@ -49,7 +51,7 @@ def check_campaign_budgets() -> Dict[str, Any]:
                     stats['campaigns_checked'] += 1
                     
                     # Check if campaign should be active based on budget and schedule
-                    should_be_active = campaign.should_be_active()
+                    should_be_active: bool = campaign.should_be_active()
                     
                     if campaign.is_active and not should_be_active:
                         # Pause the campaign
@@ -57,7 +59,7 @@ def check_campaign_budgets() -> Dict[str, Any]:
                         campaign.save(update_fields=['is_active', 'updated_at'])
                         stats['campaigns_paused'] += 1
                         logger.info(
-                            f"Paused campaign {campaign.id} - {campaign.name} "
+                            f"Paused campaign {campaign.pk} - {campaign.name} "
                             f"(Brand: {campaign.brand.name})"
                         )
                     elif not campaign.is_active and should_be_active:
@@ -66,11 +68,11 @@ def check_campaign_budgets() -> Dict[str, Any]:
                         campaign.save(update_fields=['is_active', 'updated_at'])
                         stats['campaigns_reactivated'] += 1
                         logger.info(
-                            f"Reactivated campaign {campaign.id} - {campaign.name} "
+                            f"Reactivated campaign {campaign.pk} - {campaign.name} "
                             f"(Brand: {campaign.brand.name})"
                         )
             except Exception as e:
-                error_msg = f"Error processing campaign {campaign.id}: {str(e)}"
+                error_msg = f"Error processing campaign {campaign.pk}: {str(e)}"
                 logger.error(error_msg, exc_info=True)
                 stats['errors'].append(error_msg)
     except Exception as e:
@@ -83,7 +85,7 @@ def check_campaign_budgets() -> Dict[str, Any]:
 
 def _reactivate_eligible_campaigns() -> Dict[str, int]:
     """Reactivate campaigns that were paused due to budget constraints."""
-    stats = {
+    stats: Dict[str, int] = {
         'campaigns_reactivated': 0,
         'brands_reactivated': 0
     }
@@ -105,11 +107,12 @@ def _reactivate_eligible_campaigns() -> Dict[str, int]:
                 campaign.save(update_fields=['is_active', 'updated_at'])
                 stats['campaigns_reactivated'] += 1
         except Exception as e:
-            logger.error(f"Error reactivating campaign {campaign.id}: {str(e)}", exc_info=True)
+            logger.error(f"Error reactivating campaign {campaign.pk}: {str(e)}", exc_info=True)
     
     return stats
 
-@shared_task(name="reset_daily_budgets")
+
+@shared_task(name="budget.tasks.reset_daily_budgets")  # type: ignore[misc]
 def reset_daily_budgets() -> Dict[str, Any]:
     """
     Reset daily budgets for all brands and campaigns and reactivate eligible campaigns.
@@ -119,7 +122,7 @@ def reset_daily_budgets() -> Dict[str, Any]:
     Returns:
         Dict with statistics about the operation.
     """
-    stats = {
+    stats: Dict[str, Any] = {
         'timestamp': timezone.now().isoformat(),
         'brands_updated': 0,
         'campaigns_updated': 0,
@@ -129,14 +132,14 @@ def reset_daily_budgets() -> Dict[str, Any]:
     
     try:
         # Reset brand daily spends
-        updated_brands = Brand.objects.update(
+        updated_brands: int = Brand.objects.update(
             current_daily_spend=Decimal('0.00'),
             last_daily_reset=timezone.now().date()
         )
         stats['brands_updated'] = updated_brands
         
         # Reset campaign daily spends
-        updated_campaigns = Campaign.objects.update(
+        updated_campaigns: int = Campaign.objects.update(
             current_daily_spend=Decimal('0.00'),
             last_daily_reset=timezone.now().date()
         )
@@ -158,7 +161,7 @@ def reset_daily_budgets() -> Dict[str, Any]:
     return stats
 
 
-@shared_task(name="reset_monthly_budgets")
+@shared_task(name="budget.tasks.reset_monthly_budgets")  # type: ignore[misc]
 def reset_monthly_budgets() -> Dict[str, Any]:
     """
     Reset monthly budgets for all brands and reactivate eligible campaigns.
@@ -168,7 +171,7 @@ def reset_monthly_budgets() -> Dict[str, Any]:
     Returns:
         Dict with statistics about the operation.
     """
-    stats = {
+    stats: Dict[str, Any] = {
         'timestamp': timezone.now().isoformat(),
         'brands_updated': 0,
         'campaigns_reactivated': 0,
@@ -177,7 +180,7 @@ def reset_monthly_budgets() -> Dict[str, Any]:
     
     try:
         # Reset brand monthly spends
-        updated_brands = Brand.objects.update(
+        updated_brands: int = Brand.objects.update(
             current_monthly_spend=Decimal('0.00'),
             last_monthly_reset=timezone.now().date()
         )
@@ -199,7 +202,7 @@ def reset_monthly_budgets() -> Dict[str, Any]:
     return stats
 
 
-@shared_task(name="update_campaign_statuses")
+@shared_task(name="budget.tasks.update_campaign_statuses")  # type: ignore[misc]
 def update_campaign_statuses() -> Dict[str, Any]:
     """
     Update campaign statuses based on dayparting schedules.
@@ -210,7 +213,7 @@ def update_campaign_statuses() -> Dict[str, Any]:
     Returns:
         Dict with statistics about the operation.
     """
-    stats = {
+    stats: Dict[str, Any] = {
         'timestamp': timezone.now().isoformat(),
         'campaigns_checked': 0,
         'status_changes': 0,
@@ -229,7 +232,7 @@ def update_campaign_statuses() -> Dict[str, Any]:
                 stats['campaigns_checked'] += 1
                 
                 # Check if campaign should be active based on dayparting
-                should_be_active = any(
+                should_be_active: bool = any(
                     schedule.is_active_now() 
                     for schedule in campaign.dayparting_schedules.filter(is_active=True)
                 )
@@ -242,11 +245,11 @@ def update_campaign_statuses() -> Dict[str, Any]:
                     
                     action = "activated" if should_be_active else "paused"
                     logger.info(
-                        f"{action.capitalize()} campaign {campaign.id} - {campaign.name} "
+                        f"{action.capitalize()} campaign {campaign.pk} - {campaign.name} "
                         f"(Brand: {campaign.brand.name}) based on dayparting schedule"
                     )
             except Exception as e:
-                error_msg = f"Error updating status for campaign {campaign.id}: {str(e)}"
+                error_msg = f"Error updating status for campaign {campaign.pk}: {str(e)}"
                 logger.error(error_msg, exc_info=True)
                 stats['errors'].append(error_msg)
     except Exception as e:
@@ -257,7 +260,7 @@ def update_campaign_statuses() -> Dict[str, Any]:
     return stats
 
 
-@shared_task(name="process_spend_record")
+@shared_task(name="budget.tasks.process_spend_record")  # type: ignore[misc]
 def process_spend_record(
     brand_id: int, 
     amount: Decimal, 
@@ -278,10 +281,7 @@ def process_spend_record(
     Returns:
         Dict with the result of the operation.
     """
-    from .models import Brand, SpendRecord
-    from .models.campaign import Campaign, CampaignStatus
-    
-    result = {
+    result: Dict[str, Any] = {
         'success': False,
         'record_id': None,
         'errors': [],
@@ -298,7 +298,7 @@ def process_spend_record(
                 return result
             
             # Get the campaign if provided
-            campaign = None
+            campaign: Optional[Campaign] = None
             if campaign_id is not None:
                 try:
                     campaign = Campaign.objects.select_for_update().get(
@@ -328,15 +328,15 @@ def process_spend_record(
             
             result.update({
                 'success': True,
-                'record_id': spend_record.id,
-                'brand_id': brand.id,
-                'campaign_id': campaign.id if campaign else None,
+                'record_id': spend_record.pk,
+                'brand_id': brand.pk,
+                'campaign_id': campaign.pk if campaign else None,
                 'amount': str(amount),
                 'timestamp': spend_record.timestamp.isoformat()
             })
             
             logger.info(
-                f"Processed spend record {spend_record.id} - {amount} USD "
+                f"Processed spend record {spend_record.pk} - {amount} USD "
                 f"for brand {brand.name}" + 
                 (f" and campaign {campaign.name}" if campaign else "")
             )
