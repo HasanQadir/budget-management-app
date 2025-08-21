@@ -1,8 +1,9 @@
 """SpendRecord model for tracking advertising spend."""
-from datetime import date
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any, Optional, TYPE_CHECKING
 from django.db import models
+from django.db.models import ForeignKey, DecimalField, DateTimeField, CharField, JSONField
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 
@@ -17,14 +18,14 @@ class SpendRecord(models.Model):
     
     Each record represents a single spend event with an amount and timestamp.
     """
-    brand = models.ForeignKey(
+    brand: ForeignKey = models.ForeignKey(
         'budget.Brand',
         on_delete=models.CASCADE,
         related_name='spend_records',
         help_text="The brand associated with this spend record.",
     )
     
-    campaign = models.ForeignKey(
+    campaign: ForeignKey = models.ForeignKey(
         'budget.Campaign',
         on_delete=models.CASCADE,
         related_name='spend_records',
@@ -33,31 +34,31 @@ class SpendRecord(models.Model):
         blank=True,
     )
     
-    amount = models.DecimalField(
+    amount: DecimalField = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Amount spent in USD.",
     )
     
-    timestamp = models.DateTimeField(
+    timestamp: DateTimeField = models.DateTimeField(
         default=timezone.now,
         help_text="When the spend occurred.",
     )
     
-    reference_id = models.CharField(
+    reference_id: CharField = models.CharField(
         max_length=255,
         unique=True,
         help_text="External reference ID for this spend record.",
     )
     
-    metadata = models.JSONField(
+    metadata: JSONField = models.JSONField(
         default=dict,
         blank=True,
         help_text="Additional metadata about the spend record.",
     )
     
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at: DateTimeField = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         """Meta options for the SpendRecord model."""
