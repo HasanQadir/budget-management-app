@@ -86,11 +86,14 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(self.style.WARNING('No campaigns were updated.'))
             
-            return {
+            # Don't return the dictionary, just log it
+            result = {
                 'timestamp': timezone.now().isoformat(),
                 'campaigns_updated': len(updated_campaigns),
                 'updated_campaigns': updated_campaigns,
             }
+            self.stdout.write(f"\nUpdate complete. {result['campaigns_updated']} campaigns processed.")
+            
             
         except Exception as e:
             self.stderr.write(

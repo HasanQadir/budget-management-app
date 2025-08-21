@@ -27,16 +27,17 @@ class Command(BaseCommand):
                     last_monthly_reset=timezone.now().date()
                 )
                 
+                result = {
+                    'timestamp': timezone.now().isoformat(),
+                    'brands_updated': updated_brands,
+                }
+                
                 self.stdout.write(
                     self.style.SUCCESS(
                         f'Successfully reset monthly budgets for {updated_brands} brands.'
                     )
                 )
-                
-                return {
-                    'timestamp': timezone.now().isoformat(),
-                    'brands_updated': updated_brands,
-                }
+                self.stdout.write(f'Reset complete at {result["timestamp"]}')
                 
         except Exception as e:
             self.stderr.write(

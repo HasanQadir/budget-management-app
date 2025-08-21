@@ -33,17 +33,18 @@ class Command(BaseCommand):
                     last_daily_reset=timezone.now().date()
                 )
                 
+                result = {
+                    'timestamp': timezone.now().isoformat(),
+                    'brands_updated': updated_brands,
+                    'campaigns_updated': updated_campaigns,
+                }
+                
                 self.stdout.write(
                     self.style.SUCCESS(
                         f'Successfully reset daily budgets for {updated_brands} brands and {updated_campaigns} campaigns.'
                     )
                 )
-                
-                return {
-                    'timestamp': timezone.now().isoformat(),
-                    'brands_updated': updated_brands,
-                    'campaigns_updated': updated_campaigns,
-                }
+                self.stdout.write(f'Reset complete at {result["timestamp"]}')
                 
         except Exception as e:
             self.stderr.write(
