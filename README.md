@@ -19,7 +19,75 @@ A Django 5.2.5 + Celery based system for managing advertising budgets and campai
 - Periodic budget resets
 - Type-safe codebase with static type checking
 
-## Setup
+## Prerequisites
+
+### Database Setup
+
+#### macOS (using Homebrew)
+```bash
+# Install PostgreSQL
+brew install postgresql
+
+# Start PostgreSQL service
+brew services start postgresql
+
+# Create a database user (optional, but recommended)
+createuser -s postgres
+```
+
+#### Ubuntu/Debian
+```bash
+# Install PostgreSQL
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# Start PostgreSQL service
+sudo service postgresql start
+
+# Create a database user (optional, but recommended)
+sudo -u postgres createuser --superuser $USER
+```
+
+#### Windows
+1. Download the installer from [PostgreSQL Downloads](https://www.postgresql.org/download/windows/)
+2. Run the installer and follow the setup wizard
+3. Make sure to remember the password you set for the postgres user
+4. Add PostgreSQL's bin directory to your system PATH (usually `C:\Program Files\PostgreSQL\<version>\bin`)
+
+## Environment Setup
+
+### Development
+```bash
+# Copy development environment file
+cp packaging/environments/env.dev.example .env
+
+# Install development dependencies
+cp packaging/requirements/requirements-dev.txt requirements.txt
+pip install -r requirements.txt
+
+```
+
+### QA
+```bash
+# Copy QA environment file
+cp packaging/environments/env.qa.example .env
+
+# Install QA dependencies
+cp packaging/requirements/requirements-qa.txt requirements.txt
+pip install -r requirements.txt
+```
+
+### Production
+```bash
+# Copy production environment file
+cp packaging/environments/env.prod.example .env
+
+# Install production dependencies
+cp packaging/requirements/requirements-prod.txt requirements.txt
+pip install -r requirements.txt
+```
+
+### Common Setup Steps
 
 1. Create and activate a virtual environment:
    ```bash
@@ -27,24 +95,11 @@ A Django 5.2.5 + Celery based system for managing advertising budgets and campai
    source venv/bin/activate  # On Windows: .\venv\Scripts\activate
    ```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. Install the appropriate requirements as shown above for your environment.
 
-3. Set up environment variables in `.env` file:
-   ```
-   # Required
-   SECRET_KEY=your-secret-key
-   DEBUG=True
-   REDIS_URL=redis://localhost:6379/0
-   
-   # Optional
-   ENVIRONMENT=development  # Set to 'production' in production
-   ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
-   ```
+3. Update the `.env` file with your specific configuration values.
 
-4. Run migrations:
+4. Run database migrations:
    ```bash
    python manage.py migrate
    ```

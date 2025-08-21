@@ -1,0 +1,54 @@
+# Core
+Django==5.2.5
+python-dotenv==1.0.0
+
+# Celery
+celery==5.3.6
+redis==5.0.1
+django-celery-beat==2.8.1
+django-celery-results==2.5.1
+
+# Type Checking
+mypy==1.10.0
+django-stubs[compatible-mypy]>=5.0.0
+types-redis>=4.6.0.11
+types-python-dateutil>=2.8.19.14
+
+# Database
+psycopg[binary]==3.2.9  # For PostgreSQL
+
+# Security
+django-cors-headers==4.3.1
+django-environ==0.11.2
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2024.1
+
+
+# Testing
+pytest==8.0.0
+pytest-django==4.7.0
+pytest-cov==4.1.0
+factory-boy==3.3.0
+freezegun==1.4.0
+
+# Monitoring
+sentry-sdk==1.40.0
+newrelic==8.10.0
+
+# Performance
+whitenoise==6.6.0
+
+# Security
+safety
+
+# API Documentation
+drf-yasg==1.21.7
+djangorestframework==3.14.0
+
+# Caching
+python-memcached==1.59
+
+# Error Tracking
+huey==2.4.5  # For task queue monitoring
