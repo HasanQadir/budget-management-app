@@ -37,7 +37,7 @@ X_FRAME_OPTIONS = 'DENY'
 
 # For development, you can override these in local_settings.py
 try:
-    from .local_settings import *  # noqa: F401, F403
+    from budget_manager.local_settings import *  # type: ignore
 except ImportError:
     pass
 

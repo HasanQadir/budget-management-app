@@ -4,7 +4,11 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils import timezone
-from typing import Optional, Dict, Any, List
+from django.http import HttpRequest
+from django.db.models.query import QuerySet
+from typing import Optional, Dict, Any, List, Tuple
+from django.db.models import F
+
 
 from .models import (
     Brand,
@@ -70,7 +74,7 @@ class BrandAdmin(admin.ModelAdmin):
             return "N/A"
         percentage = (obj.current_daily_spend / obj.daily_budget) * 100
         return f"{percentage:.1f}%"
-    daily_budget_used.short_description = 'Daily Budget Used'
+    daily_budget_used.short_description = 'Daily Budget Used'  # type: ignore[attr-defined]
     
     def monthly_budget_used(self, obj: Brand) -> str:
         """Display the percentage of monthly budget used."""
@@ -78,11 +82,11 @@ class BrandAdmin(admin.ModelAdmin):
             return "N/A"
         percentage = (obj.current_monthly_spend / obj.monthly_budget) * 100
         return f"{percentage:.1f}%"
-    monthly_budget_used.short_description = 'Monthly Budget Used'
+    monthly_budget_used.short_description = 'Monthly Budget Used'  # type: ignore[attr-defined]
     
     actions = ['reset_daily_spend', 'reset_monthly_spend']
     
-    def reset_daily_spend(self, request, queryset) -> None:
+    def reset_daily_spend(self, request: HttpRequest, queryset: QuerySet[Brand]) -> None:
         """Custom action to reset daily spend for selected brands."""
         updated = queryset.update(
             current_daily_spend=0,
@@ -92,9 +96,9 @@ class BrandAdmin(admin.ModelAdmin):
             request, 
             f"Successfully reset daily spend for {updated} brands."
         )
-    reset_daily_spend.short_description = "Reset daily spend for selected brands"
+    reset_daily_spend.short_description = "Reset daily spend for selected brands"  # type: ignore[attr-defined]
     
-    def reset_monthly_spend(self, request, queryset) -> None:
+    def reset_monthly_spend(self, request: HttpRequest, queryset: QuerySet[Brand]) -> None:
         """Custom action to reset monthly spend for selected brands."""
         updated = queryset.update(
             current_monthly_spend=0,
@@ -104,7 +108,7 @@ class BrandAdmin(admin.ModelAdmin):
             request, 
             f"Successfully reset monthly spend for {updated} brands."
         )
-    reset_monthly_spend.short_description = "Reset monthly spend for selected brands"
+    reset_monthly_spend.short_description = "Reset monthly spend for selected brands"  # type: ignore[attr-defined]
 
 
 class CampaignStatusFilter(admin.SimpleListFilter):
@@ -112,7 +116,7 @@ class CampaignStatusFilter(admin.SimpleListFilter):
     title = 'status'
     parameter_name = 'status'
     
-    def lookups(self, request, model_admin):
+    def lookups(self, request: HttpRequest, model_admin: admin.ModelAdmin) -> List[Tuple[str, str]]:
         return [
             ('active', 'Active'),
             ('paused', 'Paused'),
@@ -120,18 +124,19 @@ class CampaignStatusFilter(admin.SimpleListFilter):
             ('inactive_schedule', 'Inactive (Schedule)')
         ]
     
-    def queryset(self, request, queryset):
+    def queryset(self, request: HttpRequest, queryset: QuerySet) -> Optional[QuerySet]:
         if self.value() == 'active':
             return queryset.filter(is_active=True)
         elif self.value() == 'paused':
             return queryset.filter(is_active=False)
         elif self.value() == 'over_budget':
             return queryset.filter(
-                current_daily_spend__gte=models.F('daily_budget')
+                current_daily_spend__gte=F('daily_budget')
             )
         elif self.value() == 'inactive_schedule':
             # This would require a more complex query in a real implementation
             return queryset.none()
+        return None  # Added to satisfy mypy for all branches
 
 
 class CampaignAdmin(admin.ModelAdmin):
@@ -187,8 +192,8 @@ class CampaignAdmin(admin.ModelAdmin):
         """Create a link to the brand's admin page."""
         url = reverse('admin:budget_brand_change', args=[obj.brand.id])
         return format_html('<a href="{}">{}</a>', url, obj.brand.name)
-    brand_link.short_description = 'Brand'
-    brand_link.admin_order_field = 'brand__name'
+    brand_link.short_description = 'Brand'  # type: ignore[attr-defined]
+    brand_link.admin_order_field = 'brand__name'  # type: ignore[attr-defined]
     
     def daily_budget_used(self, obj: Campaign) -> str:
         """Display the percentage of daily budget used."""
@@ -196,17 +201,17 @@ class CampaignAdmin(admin.ModelAdmin):
             return "N/A"
         percentage = (obj.current_daily_spend / obj.daily_budget) * 100
         return f"{percentage:.1f}%"
-    daily_budget_used.short_description = 'Budget Used'
+    daily_budget_used.short_description = 'Budget Used'  # type: ignore[attr-defined]
     
     def has_dayparting(self, obj: Campaign) -> bool:
         """Check if the campaign has any dayparting schedules."""
         return obj.dayparting_schedules.exists()
-    has_dayparting.boolean = True
-    has_dayparting.short_description = 'Has Dayparting'
+    has_dayparting.boolean = True  # type: ignore[attr-defined]
+    has_dayparting.short_description = 'Has Dayparting'  # type: ignore[attr-defined]
     
     actions = ['reset_daily_spend', 'activate_campaigns', 'pause_campaigns']
     
-    def reset_daily_spend(self, request, queryset) -> None:
+    def reset_daily_spend(self, request: HttpRequest, queryset: QuerySet[Campaign]) -> None:
         """Custom action to reset daily spend for selected campaigns."""
         updated = queryset.update(
             current_daily_spend=0,
@@ -216,19 +221,19 @@ class CampaignAdmin(admin.ModelAdmin):
             request, 
             f"Successfully reset daily spend for {updated} campaigns."
         )
-    reset_daily_spend.short_description = "Reset daily spend for selected campaigns"
+    reset_daily_spend.short_description = "Reset daily spend for selected campaigns"  # type: ignore[attr-defined]
     
-    def activate_campaigns(self, request, queryset) -> None:
+    def activate_campaigns(self, request: HttpRequest, queryset: QuerySet[Campaign]) -> None:
         """Custom action to activate selected campaigns."""
         updated = queryset.update(is_active=True)
         self.message_user(request, f"Successfully activated {updated} campaigns.")
-    activate_campaigns.short_description = "Activate selected campaigns"
+    activate_campaigns.short_description = "Activate selected campaigns"  # type: ignore[attr-defined]
     
-    def pause_campaigns(self, request, queryset) -> None:
+    def pause_campaigns(self, request: HttpRequest, queryset: QuerySet[Campaign]) -> None:
         """Custom action to pause selected campaigns."""
         updated = queryset.update(is_active=False)
         self.message_user(request, f"Successfully paused {updated} campaigns.")
-    pause_campaigns.short_description = "Pause selected campaigns"
+    pause_campaigns.short_description = "Pause selected campaigns"  # type: ignore[attr-defined]
 
 
 class SpendRecordAdmin(admin.ModelAdmin):
@@ -264,8 +269,8 @@ class SpendRecordAdmin(admin.ModelAdmin):
         """Create a link to the brand's admin page."""
         url = reverse('admin:budget_brand_change', args=[obj.brand.id])
         return format_html('<a href="{}">{}</a>', url, obj.brand.name)
-    brand_link.short_description = 'Brand'
-    brand_link.admin_order_field = 'brand__name'
+    brand_link.short_description = 'Brand'  # type: ignore[attr-defined]
+    brand_link.admin_order_field = 'brand__name'  # type: ignore[attr-defined]
     
     def campaign_link(self, obj: SpendRecord) -> str:
         """Create a link to the campaign's admin page if it exists."""
@@ -273,8 +278,8 @@ class SpendRecordAdmin(admin.ModelAdmin):
             return "-"
         url = reverse('admin:budget_campaign_change', args=[obj.campaign.id])
         return format_html('<a href="{}">{}</a>', url, obj.campaign.name)
-    campaign_link.short_description = 'Campaign'
-    campaign_link.admin_order_field = 'campaign__name'
+    campaign_link.short_description = 'Campaign'  # type: ignore[attr-defined]
+    campaign_link.admin_order_field = 'campaign__name'  # type: ignore[attr-defined]
 
 
 class DaypartingScheduleAdmin(admin.ModelAdmin):
@@ -311,11 +316,9 @@ class DaypartingScheduleAdmin(admin.ModelAdmin):
             url, 
             obj.campaign.name
         )
-    campaign_link.short_description = 'Campaign'
-    campaign_link.admin_order_field = 'campaign__name'
+    campaign_link.short_description = 'Campaign'  # type: ignore[attr-defined]
+    campaign_link.admin_order_field = 'campaign__name'  # type: ignore[attr-defined]
 
-
-# Register models with their admin classes
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(Campaign, CampaignAdmin)
 admin.site.register(SpendRecord, SpendRecordAdmin)
