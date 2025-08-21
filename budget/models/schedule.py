@@ -93,7 +93,15 @@ class DaypartingSchedule(models.Model):
     
     def __str__(self) -> str:
         """Return string representation of the dayparting schedule."""
-        day_display: str = self.get_day_of_week_display.__func__(self)  # type: ignore[attr-defined]
+        day_display = {
+            DayOfWeek.MONDAY: "Monday",
+            DayOfWeek.TUESDAY: "Tuesday",
+            DayOfWeek.WEDNESDAY: "Wednesday",
+            DayOfWeek.THURSDAY: "Thursday",
+            DayOfWeek.FRIDAY: "Friday",
+            DayOfWeek.SATURDAY: "Saturday",
+            DayOfWeek.SUNDAY: "Sunday",
+        }.get(self.day_of_week, str(self.day_of_week))
         return f"{self.campaign} - {day_display} {self.start_time}-{self.end_time}"
     
     def clean(self) -> None:
